@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Parking System</title>
+    
+<script>
+    // Check if user is logged in
+    if (!localStorage.getItem('loggedIn')) {
+        // Not logged in, redirect to login page
+        window.location.href = 'login.html';
+    }
+    
+    //  logout function
+    function logout() {
+        localStorage.removeItem('loggedIn');
+        localStorage.removeItem('username');
+        window.location.href = 'login.html';
+    }
+</script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial;
+        }
+        
+        body {
+            background: #f0f2f5;
+            color: #333;
+        }
+        
+        /* Header */
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        /* Navigation */
+        .nav {
+            display: flex;
+            background: white;
+            padding: 10px;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .nav-btn {
+            padding: 10px 20px;
+            border: none;
+            background: #ecf0f1;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .nav-btn.active {
+            background: #3498db;
+            color: white;
+        }
+        
+        /* Main Content */
+        .main {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        /* Card Style */
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        /* Home Page */
+        .welcome {
+            text-align: center;
+            padding: 30px 0;
+        }
+        
+        .welcome h1 {
+            font-size: 28px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .total { color: #2c3e50; }
+        .free { color: #27ae60; }
+        .taken { color: #e74c3c; }
+        .reserved { color: #f39c12; }
+        
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        /* Parking Spots */
+        .spots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .spot {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid;
+        }
+        
+        .available { border-color: #27ae60; background: #e8f5e9; }
+        .occupied { border-color: #e74c3c; background: #ffebee; }
+        .reserved { border-color: #f39c12; background: #fff3e0; }
+        
+        .spot-id {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        
+        .spot-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 14px;
+            margin: 5px 0;
+            color: white;
+        }
+        
+        .available .spot-status { background: #27ae60; }
+        .occupied .spot-status { background: #e74c3c; }
+        .reserved .spot-status { background: #f39c12; color: black; }
+        
+        /* Buttons */
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #2c3e50;
+            color: white;
+        }
+        
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        /* Forms */
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        /* Booking Page */
+        .booking-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        
+        .summary-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .total-price {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #3498db;
+        }
+        
+        /* Messages */
+        .message {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: none;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>🅿️ Smart Parking</h1>
+        <p> Parking Booking System</p>
+    </div>
+    
+    <!-- Navigation -->
+    <div class="nav">
+        <button class="nav-btn active" onclick="showPage('home')">🏠 Home</button>
+        <button class="nav-btn" onclick="showPage('parking')">🚗 Parking</button>
+        <button class="nav-btn" onclick="showPage('booking')">📋 Book</button>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main">
+        <!-- Home Page -->
+        <div id="home" class="page active">
+            <div class="card welcome">
+                <h1>Welcome to Parking System</h1>
+                <p>Find and book parking spots easily. Real-time updates!</p>
+                
+                <div class="quick-actions">
+                    <button class="btn btn-primary" onclick="showPage('parking')">
+                        Find Spots
+                    </button>
+                    <button class="btn btn-secondary" onclick="showPage('booking')">
+                        Book Now
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>Parking Status</h2>
+                <div id="stats-container" class="quick-stats">
+                    <div class="stat">
+                        <span class="stat-number total">0</span>
+                        Total Spots
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number free">0</span>
+                        Available
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number taken">0</span>
+                        Occupied
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number reserved">0</span>
+                        Reserved
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>How It Works</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div style="text-align: center; padding: 15px;">
+                        <div style="font-size: 30px; margin-bottom: 10px;">1️⃣</div>
+                        <h3>Find Spot</h3>
+                        <p>Check available parking spots</p>
+                    </div>
+                    <div style="text-align: center; padding: 15px;">
+                        <div style="font-size: 30px; margin-bottom: 10px;">2️⃣</div>
+                        <h3>Book</h3>
+                        <p>Select spot and book instantly</p>
+                    </div>
+                    <div style="text-align: center; padding: 15px;">
+                        <div style="font-size: 30px; margin-bottom: 10px;">3️⃣</div>
+                        <h3>Park</h3>
+                        <p>Arrive and park at your spot</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Parking Page -->
+        <div id="parking" class="page">
+            <div class="card">
+                <h2>Parking Spots</h2>
+                <p>Green = Available, Red = Occupied, Yellow = Reserved</p>
+                
+                <div id="parking-msg" class="message"></div>
+                
+                <button class="btn btn-primary" onclick="loadSpots()" style="margin: 10px 0;">
+                    🔄 Refresh
+                </button>
+                
+                <div id="spots-container" class="spots-grid">
+                    <!-- Spots load here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Booking Page -->
+        <div id="booking" class="page">
+            <div class="card">
+                <h2>Book Parking Spot</h2>
+                
+                <div id="booking-msg" class="message"></div>
+                
+                <div class="booking-form">
+                    <!-- Form Left -->
+                    <div>
+                        <form id="bookForm">
+                            <div class="form-group">
+                                <label>Select Spot:</label>
+                                <select id="spotSelect" class="form-control" required>
+                                    <option value="">Choose spot</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Vehicle Number:</label>
+                                <input type="text" id="vehicle" class="form-control" 
+                                       placeholder="ABC123" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Duration (hours):</label>
+                                <select id="hours" class="form-control" required>
+                                    <option value="1">1 hour</option>
+                                    <option value="2">2 hours</option>
+                                    <option value="3">3 hours</option>
+                                    <option value="4">4 hours</option>
+                                    <option value="8">8 hours</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Payment Method:</label>
+                                <select id="payment" class="form-control" required>
+                                    <option value="card">Credit Card</option>
+                                    <option value="cash">Cash</option>
+                                    <option value="paypal">PayPal</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px;">
+                                🔒 Confirm Booking
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Summary Right -->
+                    <div class="summary-box">
+                        <h3>Booking Summary</h3>
+                        
+                        <div class="summary-item">
+                            <span>Spot:</span>
+                            <span id="sumSpot">-</span>
+                        </div>
+                        
+                        <div class="summary-item">
+                            <span>Duration:</span>
+                            <span id="sumHours">- hours</span>
+                        </div>
+                        
+                        <div class="summary-item">
+                            <span>Price per hour:</span>
+                            <span id="sumPrice">$0</span>
+                        </div>
+                        
+                        <div class="summary-item">
+                            <span>Tax (10%):</span>
+                            <span id="sumTax">$0</span>
+                        </div>
+                        
+                        <div class="total-price">
+                            <span>Total:</span>
+                            <span id="sumTotal">$0</span>
+                        </div>
+                        
+                        <div style="margin-top: 20px; font-size: 14px; color: #666;">
+                            <p>✅ Instant confirmation</p>
+                            <p>⏰ Cancel anytime</p>
+                            <p>📧 Email receipt sent</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Receipt -->
+                <div id="receipt" class="card" style="margin-top: 20px; display: none;">
+                    <h3 style="color: #27ae60;">✅ Booking Confirmed!</h3>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 15px 0;">
+                        <div>
+                            <strong>Booking ID:</strong><br>
+                            <span id="receiptId">-</span>
+                        </div>
+                        <div>
+                            <strong>Vehicle:</strong><br>
+                            <span id="receiptVehicle">-</span>
+                        </div>
+                        <div>
+                            <strong>Spot:</strong><br>
+                            <span id="receiptSpot">-</span>
+                        </div>
+                        <div>
+                            <strong>Total:</strong><br>
+                            <span id="receiptTotal">-</span>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="resetForm()">
+                        Book Another Spot
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+        <p>Parking System © 2025 </p>
+        <p style="font-size: 14px; margin-top: 5px;">
+            Contact: info@parking.com | Phone: (0123) 456-789
+        </p>
+    </div>
+
+    <script>
+        // Parking System Frontend
+        
+        // Backend URL
+        const BACKEND_URL = 'http://localhost:3000';
+        
+        // Show pages
+        function showPage(page) {
+            // Update nav buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Show selected page
+            document.querySelectorAll('.page').forEach(p => {
+                p.classList.remove('active');
+            });
+            document.getElementById(page).classList.add('active');
+            
+            // Load data
+            if (page === 'parking') {
+                loadSpots();
+            } else if (page === 'booking') {
+                setupBooking();
+            } else if (page === 'home') {
+                loadStats();
+            }
+        }
+        
+        // Load parking spots from backend
+        async function loadSpots() {
+            const container = document.getElementById('spots-container');
+            const msg = document.getElementById('parking-msg');
+            
+            container.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">Loading...</p>';
+            
+            try {
+                // Fetch spots from backend
+                const response = await fetch(`${BACKEND_URL}/api/parking-spots`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displaySpots(data.data);
+                    showMsg('Parking spots loaded successfully!', 'success', msg);
+                } else {
+                    throw new Error('Failed to load spots from backend');
+                }
+                
+            } catch (error) {
+                console.error('Error loading spots:', error);
+                // Try demo data as fallback
+                
+                const demoSpots = [
+                    {id: 'A-101', status: 'available', pricePerHour: 3, location: 'Downtown'},
+                    {id: 'A-102', status: 'available', pricePerHour: 3, location: 'Downtown'},
+                    {id: 'A-103', status: 'occupied', pricePerHour: 3, location: 'Downtown'},
+                    {id: 'B-201', status: 'available', pricePerHour: 4, location: 'Mall'},
+                    {id: 'B-202', status: 'reserved', pricePerHour: 4, location: 'Mall'},
+                    {id: 'B-203', status: 'available', pricePerHour: 4, location: 'Mall'}
+                ];
+                displaySpots(demoSpots);
+                showMsg('Using demo data - Backend not available', 'error', msg);
+            }
+        }
+        
+        // Display spots on the page
+        function displaySpots(spots) {
+            const container = document.getElementById('spots-container');
+            
+            if (!spots || spots.length === 0) {
+                container.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">No parking spots found</p>';
+                return;
+            }
+            
+            let html = '';
+            
+            spots.forEach(spot => {
+                const status = spot.status || 'available';
+                const price = spot.pricePerHour || 3;
+                const location = spot.location || 'Unknown';
+                
+                // Map backend status to CSS class
+                const statusClass = status === 'available' ? 'available' : 
+                                   status === 'occupied' ? 'occupied' : 'reserved';
+                
+                html += `
+                    <div class="spot ${statusClass}">
+                        <div class="spot-id">${spot.id}</div>
+                        <div class="spot-status">${status.toUpperCase()}</div>
+                        <div style="margin: 5px 0;">${location}</div>
+                        <div style="margin: 10px 0; font-weight: bold;">$${price}/hour</div>
+                        
+                        ${status === 'available' 
+                            ? `<button class="btn btn-primary" 
+                                  onclick="quickBook('${spot.id}', ${price})">
+                                Book Now
+                              </button>`
+                            : `<button class="btn" disabled>
+                                ${status === 'occupied' ? 'Occupied' : 'Reserved'}
+                              </button>`
+                        }
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // Load statistics from backend
+        async function loadStats() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/stats`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Update stats display
+                    document.querySelector('.stat:nth-child(1) .stat-number').textContent = data.data.totalSpots;
+                    document.querySelector('.stat:nth-child(2) .stat-number').textContent = data.data.availableSpots;
+                    document.querySelector('.stat:nth-child(3) .stat-number').textContent = data.data.occupiedSpots;
+                    document.querySelector('.stat:nth-child(4) .stat-number').textContent = data.data.reservedSpots;
+                }
+            } catch (error) {
+                console.log('Using demo stats');
+                // Demo stats
+                document.querySelector('.stat:nth-child(1) .stat-number').textContent = '6';
+                document.querySelector('.stat:nth-child(2) .stat-number').textContent = '3';
+                document.querySelector('.stat:nth-child(3) .stat-number').textContent = '2';
+                document.querySelector('.stat:nth-child(4) .stat-number').textContent = '1';
+            }
+        }
+        
+        // Setup booking page
+        function setupBooking() {
+            // Load available spots for dropdown
+            loadAvailableSpots();
+            
+            // Set up event listeners
+            document.getElementById('spotSelect').addEventListener('change', updateSummary);
+            document.getElementById('hours').addEventListener('change', updateSummary);
+            
+            // Set up form submission
+            document.getElementById('bookForm').addEventListener('submit', submitBooking);
+            
+            // Initial summary update
+            updateSummary();
+        }
+        
+        // Load available spots for booking dropdown
+        async function loadAvailableSpots() {
+            const select = document.getElementById('spotSelect');
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/parking-spots/available`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    updateSpotSelect(data.data);
+                }
+            } catch (error) {
+                console.log('Using demo available spots');
+                // Demo spots
+                const demoSpots = [
+                    {id: 'A-101', pricePerHour: 3},
+                    {id: 'A-102', pricePerHour: 3},
+                    {id: 'B-201', pricePerHour: 4},
+                    {id: 'B-203', pricePerHour: 4}
+                ];
+                updateSpotSelect(demoSpots);
+            }
+        }
+        
+        // Update spot dropdown
+        function updateSpotSelect(spots) {
+            const select = document.getElementById('spotSelect');
+            
+            // Clear options except first
+            while (select.options.length > 1) {
+                select.remove(1);
+            }
+            
+            // Add available spots
+            spots.forEach(spot => {
+                const option = document.createElement('option');
+                option.value = spot.id;
+                option.text = `${spot.id} - $${spot.pricePerHour}/hour`;
+                option.dataset.price = spot.pricePerHour;
+                select.add(option);
+            });
+        }
+        
+        // Update booking summary
+        function updateSummary() {
+            const select = document.getElementById('spotSelect');
+            const hours = document.getElementById('hours').value;
+            const option = select.options[select.selectedIndex];
+            
+            if (option && option.value) {
+                const price = option.dataset.price || 3;
+                const subtotal = price * hours;
+                const tax = subtotal * 0.10;
+                const total = subtotal + tax;
+                
+                // Update display
+                document.getElementById('sumSpot').textContent = option.value;
+                document.getElementById('sumHours').textContent = hours + ' hours';
+                document.getElementById('sumPrice').textContent = '$' + price;
+                document.getElementById('sumTax').textContent = '$' + tax.toFixed(2);
+                document.getElementById('sumTotal').textContent = '$' + total.toFixed(2);
+            }
+        }
+        
+        // Quick book from parking page
+        function quickBook(spotId, price) {
+            showPage('booking');
+            
+            setTimeout(() => {
+                const select = document.getElementById('spotSelect');
+                
+                // Find the spot in dropdown
+                for (let i = 0; i < select.options.length; i++) {
+                    if (select.options[i].value === spotId) {
+                        select.value = spotId;
+                        updateSummary();
+                        return;
+                    }
+                }
+                
+                // If spot not in dropdown, add it
+                const option = document.createElement('option');
+                option.value = spotId;
+                option.text = `${spotId} - $${price}/hour`;
+                option.dataset.price = price;
+                select.add(option);
+                select.value = spotId;
+                updateSummary();
+            }, 100);
+        }
+        
+        // Submit booking to backend
+        async function submitBooking(e) {
+            e.preventDefault();
+            
+            const msg = document.getElementById('booking-msg');
+            const spotSelect = document.getElementById('spotSelect');
+            const vehicle = document.getElementById('vehicle').value;
+            const hours = document.getElementById('hours').value;
+            const payment = document.getElementById('payment').value;
+            
+            if (!spotSelect.value) {
+                showMsg('Please select a parking spot', 'error', msg);
+                return;
+            }
+            
+            if (!vehicle) {
+                showMsg('Please enter vehicle number', 'error', msg);
+                return;
+            }
+            
+            // Show loading state
+            const button = e.target.querySelector('button');
+            const originalText = button.innerHTML;
+            button.innerHTML = 'Booking...';
+            button.disabled = true;
+            
+            try {
+                // Send booking request to backend
+                const response = await fetch(`${BACKEND_URL}/api/book-parking`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        spotId: spotSelect.value,
+                        vehicleNumber: vehicle,
+                        duration: parseInt(hours),
+                        paymentMethod: payment
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Show receipt with data from backend
+                    showReceipt(data.data, vehicle);
+                    showMsg('Booking successful!', 'success', msg);
+                    
+                    // Refresh data
+                    loadSpots();
+                    loadStats();
+                } else {
+                    showMsg('Booking failed: ' + data.message, 'error', msg);
+                }
+                
+            } catch (error) {
+                console.error('Booking error:', error);
+                // Demo booking if backend fails
+                const option = spotSelect.options[spotSelect.selectedIndex];
+                const price = option.dataset.price || 3;
+                const total = (price * hours) * 1.10; // With tax
+                
+                showReceipt({
+                    spotId: spotSelect.value,
+                    totalPrice: total,
+                    bookingId: 'BOOK-' + Date.now().toString().slice(-6)
+                }, vehicle);
+                showMsg('Demo booking complete! (Backend not available)', 'error', msg);
+            } finally {
+                // Reset button
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        }
+        
+        // Show booking receipt
+        function showReceipt(booking, vehicle) {
+            const receipt = document.getElementById('receipt');
+            const form = document.getElementById('bookForm');
+            
+            // Fill receipt with booking details
+            document.getElementById('receiptId').textContent = booking.bookingId || 'BOOK-' + Date.now().toString().slice(-6);
+            document.getElementById('receiptVehicle').textContent = vehicle;
+            document.getElementById('receiptSpot').textContent = booking.spotId;
+            document.getElementById('receiptTotal').textContent = '$' + (booking.totalPrice || 0).toFixed(2);
+            
+            // Hide form and show receipt
+            form.style.display = 'none';
+            receipt.style.display = 'block';
+        }
+        
+        // Reset form for new booking
+        function resetForm() {
+            const form = document.getElementById('bookForm');
+            const receipt = document.getElementById('receipt');
+            
+            // Reset form
+            form.reset();
+            form.style.display = 'block';
+            receipt.style.display = 'none';
+            
+            // Reload available spots
+            loadAvailableSpots();
+            updateSummary();
+        }
+        
+        // Show message
+        function showMsg(text, type, element) {
+            element.textContent = text;
+            element.className = `message ${type}`;
+            element.style.display = 'block';
+            
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                element.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Parking system initialized');
+            console.log('Backend URL:', BACKEND_URL);
+            
+            // Load initial data
+            loadStats();
+            updateSummary();
+            
+            // Check backend connection
+            fetch(BACKEND_URL)
+                .then(response => {
+                    if (response.ok) {
+                        console.log('Backend connected successfully');
+                    }
+                })
+                .catch(error => {
+                    console.warn('Backend not available');
+                });
+        });
+        // Add this function to your existing JavaScript
+function addLogoutButton() {
+    // Add logout button to header
+    const header = document.querySelector('.header');
+    
+    const logoutBtn = document.createElement('button');
+    logoutBtn.innerHTML = 'Logout';
+    logoutBtn.style.cssText = `
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: #e74c3c;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+    `;
+    logoutBtn.onclick = logout;
+    
+    header.style.position = 'relative';
+    header.appendChild(logoutBtn);
+}
+
+// Call this function when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Your existing initialization code...
+    
+    // Add logout button
+    addLogoutButton();
+});
+    </script>
+    
+</body>
+</html>

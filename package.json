@@ -1,0 +1,17 @@
+{
+  "name": "smart-parking-backend",
+  "version": "1.0.0",
+  "description": "Smart Parking System Backend",
+  "license": "MIT",
+  "author": "Pierre and Antony ",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}
